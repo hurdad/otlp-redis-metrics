@@ -75,6 +75,20 @@ int Run(int argc, char** argv) {
     LogError("failed to connect to redis");
     return 1;
   }
+  if (!cfg.redis().unix_socket().empty()) {
+    LogInfo("connected to redis via unix socket " + cfg.redis().unix_socket() + " (db " +
+            std::to_string(cfg.redis().db()) + ")");
+  } else {
+    LogInfo("connected to redis at " + cfg.redis().host() + ":" + std::to_string(cfg.redis().port()) + " (db " +
+            std::to_string(cfg.redis().db()) + ")");
+  }
+
+  auto ping = redis.Command("PING");
+  if (!ping.has_value() || *ping != "PONG") {
+    LogError("redis startup ping failed" + (ping.has_value() ? ": " + *ping : ""));
+    return 1;
+  }
+  LogInfo("redis startup ping succeeded");
 
   if (ArgBool(argc, argv, "self_test")) {
     auto create = redis.Command("TS.CREATE self_test_metric");
