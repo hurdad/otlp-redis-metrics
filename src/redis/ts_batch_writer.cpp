@@ -11,10 +11,13 @@ TsBatchWriter::TsBatchWriter(runtime::BoundedQueue<transform::MetricPoint>* queu
                              const ::otlp::redis::metrics::config::ServiceConfig& cfg)
     : queue_(queue), schema_(schema), redis_(redis), cfg_(cfg) {}
 
-void TsBatchWriter::Start() { thread_ = std::thread([this] { Run(); }); }
+void TsBatchWriter::Start() {
+  stop_.store(false);
+  thread_ = std::thread([this] { Run(); });
+}
 
 void TsBatchWriter::Stop() {
-  stop_ = true;
+  stop_.store(true);
   if (thread_.joinable()) {
     thread_.join();
   }
@@ -24,7 +27,7 @@ void TsBatchWriter::Run() {
   std::vector<transform::MetricPoint> buf;
   auto last_flush = std::chrono::steady_clock::now();
 
-  while (!stop_) {
+  while (!stop_.load()) {
     transform::MetricPoint item;
     if (queue_->PopWait(&item, cfg_.ingest().flush_interval_ms())) {
       buf.push_back(std::move(item));
