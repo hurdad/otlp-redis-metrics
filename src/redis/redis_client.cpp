@@ -4,6 +4,27 @@
 
 namespace otlp_redis_metrics::redis {
 
+namespace {
+
+std::string ResolveUnixSocket(const ::otlp::redis::metrics::config::RedisConfig& cfg) {
+  if (!cfg.unix_socket().empty()) {
+    return cfg.unix_socket();
+  }
+
+  if (!cfg.host().empty() && cfg.host().front() == '/') {
+    return cfg.host();
+  }
+
+  static constexpr char kUnixScheme[] = "unix://";
+  if (cfg.host().rfind(kUnixScheme, 0) == 0) {
+    return cfg.host().substr(sizeof(kUnixScheme) - 1);
+  }
+
+  return "";
+}
+
+}  // namespace
+
 RedisClient::RedisClient() : ctx_(nullptr) {}
 RedisClient::~RedisClient() {
   if (ctx_ != nullptr) {
@@ -12,19 +33,20 @@ RedisClient::~RedisClient() {
 }
 
 bool RedisClient::Connect(const ::otlp::redis::metrics::config::RedisConfig& cfg) {
-  if (!cfg.unix_socket().empty()) {
-    ctx_ = redisConnectUnix(cfg.unix_socket().c_str());
+  const auto unix_socket = ResolveUnixSocket(cfg);
+  if (!unix_socket.empty()) {
+    ctx_ = redisConnectUnix(unix_socket.c_str());
   } else {
     ctx_ = redisConnect(cfg.host().c_str(), static_cast<int>(cfg.port()));
   }
   if (ctx_ == nullptr || ctx_->err) {
     return false;
   }
-  if (cfg.db() != 0) {
-    CommandArgv({"SELECT", std::to_string(cfg.db())});
-  }
   if (!cfg.password().empty()) {
     CommandArgv({"AUTH", cfg.password()});
+  }
+  if (cfg.db() != 0) {
+    CommandArgv({"SELECT", std::to_string(cfg.db())});
   }
   return true;
 }

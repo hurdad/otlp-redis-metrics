@@ -41,7 +41,7 @@ cmake --build build
 }
 ```
 
-Use `redis.unixSocket` to connect over a Unix domain socket. When `unixSocket` is set, `host` and `port` are ignored.
+Use `redis.unixSocket` to connect over a Unix domain socket. You can also put the socket path in `redis.host` (either as `/path/to/redis.sock` or `unix:///path/to/redis.sock`). When a Unix socket is used, `port` is ignored.
 
 Example:
 
