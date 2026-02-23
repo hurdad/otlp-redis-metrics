@@ -1,0 +1,28 @@
+{
+  "redis": {
+    "unixSocket": "/var/run/redis/redis.sock",
+    "db": 0
+  },
+  "timeseries": {
+    "keyPrefix": "metrics:",
+    "retentionMs": "86400000",
+    "createOnWrite": true,
+    "ensureRules": true,
+    "downsampleMs": ["60000", "300000"]
+  },
+  "ingest": {
+    "maxQueueDepth": 50000,
+    "maxBatchPoints": 5000,
+    "flushIntervalMs": 200,
+    "maxLabelKv": 12,
+    "maxLabelValueLen": 128
+  },
+  "otlp": {
+    "listenAddr": "0.0.0.0:4317",
+    "grpcThreads": 2
+  },
+  "labelPolicy": {
+    "allowedKeys": ["host", "service", "instance", "core", "gpu", "queue", "device"]
+  },
+  "normalizeMetricNames": false
+}

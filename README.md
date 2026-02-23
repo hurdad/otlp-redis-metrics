@@ -18,7 +18,7 @@ cmake --build build
 
 ```json
 {
-  "redis": {"host": "127.0.0.1", "port": 6379, "db": 0},
+  "redis": {"host": "127.0.0.1", "port": 6379, "db": 0, "unixSocket": ""},
   "timeseries": {
     "keyPrefix": "metrics:",
     "retentionMs": "86400000",
@@ -38,6 +38,16 @@ cmake --build build
     "allowedKeys": ["host", "service", "instance", "core", "gpu", "queue", "device"]
   },
   "normalizeMetricNames": false
+}
+```
+
+Use `redis.unixSocket` to connect over a Unix domain socket. When `unixSocket` is set, `host` and `port` are ignored.
+
+Example:
+
+```json
+{
+  "redis": {"unixSocket": "/var/run/redis/redis.sock", "db": 0}
 }
 ```
 
@@ -88,6 +98,13 @@ docker run --rm -p 4317:4317 \
   -v "$PWD/config.json:/app/config.json:ro" \
   otlp-redis-metrics:local --config_json=/app/config.json
 ```
+
+Run with Docker Compose (app + Redis Stack with RedisTimeSeries + Unix socket):
+
+```bash
+docker compose up --build
+```
+
 
 ## GitHub Actions multi-arch image publish
 
