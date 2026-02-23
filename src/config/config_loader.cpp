@@ -41,7 +41,10 @@ std::optional<::otlp::redis::metrics::config::ServiceConfig> ConfigLoader::Load(
 }
 
 void ConfigLoader::ApplyDefaults(::otlp::redis::metrics::config::ServiceConfig* cfg) {
-  if (cfg->redis().unix_socket().empty()) {
+  const auto host = cfg->redis().host();
+  const bool host_is_unix_socket =
+      (!host.empty() && host.front() == '/') || (host.rfind("unix://", 0) == 0);
+  if (cfg->redis().unix_socket().empty() && !host_is_unix_socket) {
     if (cfg->redis().host().empty()) cfg->mutable_redis()->set_host("127.0.0.1");
     if (cfg->redis().port() == 0) cfg->mutable_redis()->set_port(6379);
   }

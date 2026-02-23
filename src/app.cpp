@@ -24,6 +24,23 @@
 namespace {
 otlp_redis_metrics::runtime::ShutdownSignal* g_shutdown = nullptr;
 
+std::string ResolveRedisUnixSocket(const ::otlp::redis::metrics::config::RedisConfig& cfg) {
+  if (!cfg.unix_socket().empty()) {
+    return cfg.unix_socket();
+  }
+
+  if (!cfg.host().empty() && cfg.host().front() == '/') {
+    return cfg.host();
+  }
+
+  static constexpr char kUnixScheme[] = "unix://";
+  if (cfg.host().rfind(kUnixScheme, 0) == 0) {
+    return cfg.host().substr(sizeof(kUnixScheme) - 1);
+  }
+
+  return "";
+}
+
 void HandleSignal(int) {
   if (g_shutdown != nullptr) {
     g_shutdown->Request();
@@ -75,8 +92,9 @@ int Run(int argc, char** argv) {
     LogError("failed to connect to redis");
     return 1;
   }
-  if (!cfg.redis().unix_socket().empty()) {
-    LogInfo("connected to redis via unix socket " + cfg.redis().unix_socket() + " (db " +
+  const auto redis_unix_socket = ResolveRedisUnixSocket(cfg.redis());
+  if (!redis_unix_socket.empty()) {
+    LogInfo("connected to redis via unix socket " + redis_unix_socket + " (db " +
             std::to_string(cfg.redis().db()) + ")");
   } else {
     LogInfo("connected to redis at " + cfg.redis().host() + ":" + std::to_string(cfg.redis().port()) + " (db " +
