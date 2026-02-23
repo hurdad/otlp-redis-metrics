@@ -12,7 +12,11 @@ RedisClient::~RedisClient() {
 }
 
 bool RedisClient::Connect(const ::otlp::redis::metrics::config::RedisConfig& cfg) {
-  ctx_ = redisConnect(cfg.host().c_str(), static_cast<int>(cfg.port()));
+  if (!cfg.unix_socket().empty()) {
+    ctx_ = redisConnectUnix(cfg.unix_socket().c_str());
+  } else {
+    ctx_ = redisConnect(cfg.host().c_str(), static_cast<int>(cfg.port()));
+  }
   if (ctx_ == nullptr || ctx_->err) {
     return false;
   }

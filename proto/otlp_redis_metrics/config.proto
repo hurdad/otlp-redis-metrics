@@ -7,6 +7,7 @@ message RedisConfig {
   int32 db = 3;
   string password = 4;
   optional bool tls = 5;
+  string unix_socket = 6;
 }
 
 message TimeseriesConfig {

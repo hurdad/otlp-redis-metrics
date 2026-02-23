@@ -41,8 +41,10 @@ std::optional<::otlp::redis::metrics::config::ServiceConfig> ConfigLoader::Load(
 }
 
 void ConfigLoader::ApplyDefaults(::otlp::redis::metrics::config::ServiceConfig* cfg) {
-  if (cfg->redis().host().empty()) cfg->mutable_redis()->set_host("127.0.0.1");
-  if (cfg->redis().port() == 0) cfg->mutable_redis()->set_port(6379);
+  if (cfg->redis().unix_socket().empty()) {
+    if (cfg->redis().host().empty()) cfg->mutable_redis()->set_host("127.0.0.1");
+    if (cfg->redis().port() == 0) cfg->mutable_redis()->set_port(6379);
+  }
   if (cfg->timeseries().key_prefix().empty()) cfg->mutable_timeseries()->set_key_prefix("metrics:");
   if (cfg->timeseries().retention_ms() == 0) cfg->mutable_timeseries()->set_retention_ms(86400000);
   if (!cfg->timeseries().has_create_on_write()) cfg->mutable_timeseries()->set_create_on_write(true);
