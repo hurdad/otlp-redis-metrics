@@ -1,0 +1,45 @@
+syntax = "proto3";
+package otlp.redis.metrics.config;
+
+message RedisConfig {
+  string host = 1;
+  uint32 port = 2;
+  int32 db = 3;
+  string password = 4;
+  optional bool tls = 5;
+}
+
+message TimeseriesConfig {
+  string key_prefix = 1;
+  int64 retention_ms = 2;
+  optional bool create_on_write = 3;
+  optional bool ensure_rules = 4;
+  repeated int64 downsample_ms = 5;
+}
+
+message IngestConfig {
+  uint32 max_queue_depth = 1;
+  uint32 max_batch_points = 2;
+  uint32 flush_interval_ms = 3;
+  uint32 max_label_kv = 4;
+  uint32 max_label_value_len = 5;
+}
+
+message OtlpConfig {
+  string listen_addr = 1;
+  uint32 grpc_threads = 2;
+}
+
+message LabelPolicyConfig {
+  repeated string allowed_keys = 1;
+}
+
+message ServiceConfig {
+  RedisConfig redis = 1;
+  TimeseriesConfig timeseries = 2;
+  IngestConfig ingest = 3;
+  OtlpConfig otlp = 4;
+  LabelPolicyConfig label_policy = 5;
+
+  optional bool normalize_metric_names = 6;
+}
