@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <iostream>
-#include <sstream>
 #include <unordered_set>
 
 namespace otlp_redis_metrics::redis {
@@ -58,12 +57,15 @@ void TsBatchWriter::Flush(const std::vector<transform::MetricPoint>& points) {
   size_t i = 0;
   while (i < points.size()) {
     size_t end = std::min(points.size(), i + static_cast<size_t>(cfg_.ingest().max_batch_points()));
-    std::ostringstream cmd;
-    cmd << "TS.MADD";
+    std::vector<std::string> args;
+    args.reserve(1 + ((end - i) * 3));
+    args.emplace_back("TS.MADD");
     for (size_t j = i; j < end; ++j) {
-      cmd << ' ' << points[j].series_key << ' ' << points[j].timestamp_ms << ' ' << points[j].value;
+      args.push_back(points[j].series_key);
+      args.push_back(std::to_string(points[j].timestamp_ms));
+      args.push_back(std::to_string(points[j].value));
     }
-    auto res = redis_->Command(cmd.str());
+    auto res = redis_->CommandArgv(args);
     if (!res.has_value() || res->find("ERR") != std::string::npos) {
       std::cerr << "redis batch write failed\n";
     }

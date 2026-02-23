@@ -17,16 +17,48 @@ bool RedisClient::Connect(const ::otlp::redis::metrics::config::RedisConfig& cfg
     return false;
   }
   if (cfg.db() != 0) {
-    Command("SELECT " + std::to_string(cfg.db()));
+    CommandArgv({"SELECT", std::to_string(cfg.db())});
   }
   if (!cfg.password().empty()) {
-    Command("AUTH " + cfg.password());
+    CommandArgv({"AUTH", cfg.password()});
   }
   return true;
 }
 
 std::optional<std::string> RedisClient::Command(const std::string& cmd) {
   auto* reply = static_cast<redisReply*>(redisCommand(ctx_, cmd.c_str()));
+  if (reply == nullptr) {
+    return std::nullopt;
+  }
+
+  std::string out;
+  if (reply->type == REDIS_REPLY_ERROR) {
+    out = reply->str ? reply->str : "redis error";
+  } else if (reply->str != nullptr) {
+    out = reply->str;
+  } else {
+    out = "OK";
+  }
+  freeReplyObject(reply);
+  return out;
+}
+
+std::optional<std::string> RedisClient::CommandArgv(const std::vector<std::string>& args) {
+  if (args.empty()) {
+    return std::nullopt;
+  }
+
+  std::vector<const char*> argv;
+  std::vector<size_t> argvlen;
+  argv.reserve(args.size());
+  argvlen.reserve(args.size());
+  for (const auto& arg : args) {
+    argv.push_back(arg.c_str());
+    argvlen.push_back(arg.size());
+  }
+
+  auto* reply = static_cast<redisReply*>(
+      redisCommandArgv(ctx_, static_cast<int>(argv.size()), argv.data(), argvlen.data()));
   if (reply == nullptr) {
     return std::nullopt;
   }
