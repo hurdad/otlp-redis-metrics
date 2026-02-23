@@ -72,3 +72,26 @@ export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 TS.QUERYINDEX metric=system_cpu_utilization
 TS.MRANGE - + FILTER metric=system_cpu_utilization
 ```
+
+## Docker
+
+Build image locally:
+
+```bash
+docker build -t otlp-redis-metrics:local .
+```
+
+Run:
+
+```bash
+docker run --rm -p 4317:4317 \
+  -v "$PWD/config.json:/app/config.json:ro" \
+  otlp-redis-metrics:local --config_json=/app/config.json
+```
+
+## GitHub Actions multi-arch image publish
+
+This repo includes `.github/workflows/docker-image.yml` to build `linux/amd64` and `linux/arm64` images with Buildx.
+
+- Pull requests: builds multi-arch image (no push).
+- Pushes to `main` and `v*` tags: builds and pushes to `ghcr.io/<owner>/<repo>`.
