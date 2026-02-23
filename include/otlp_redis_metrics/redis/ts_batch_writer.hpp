@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <thread>
 
 #include "otlp_redis_metrics/config.pb.h"
@@ -26,7 +27,7 @@ class TsBatchWriter {
   RedisClient* redis_;
   const ::otlp::redis::metrics::config::ServiceConfig& cfg_;
   std::thread thread_;
-  bool stop_{false};
+  std::atomic<bool> stop_{false};
 };
 
 }  // namespace otlp_redis_metrics::redis
